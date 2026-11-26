@@ -16,7 +16,7 @@ Suite de [simple-gemma3-ollama-langchainjs-app](https://github.com/jlandure/simp
 
 - [adk/](adk/README.md) : l'agent ADK (TypeScript), son connecteur Ollama, ses outils, le MCP Context7, une démo scriptée et le déploiement Cloud Run.
 - [ollama/](ollama/README.md) : Ollama + Gemma 4 sur Cloud Run GPU (modèle dans l'image ou dans Cloud Storage).
-- [claude-code/](claude-code/README.md) : démo bonus, Claude Code qui utilise Gemma 4 sur Cloud Run comme modèle.
+- [claude-code/](claude-code/README.md) : démo bonus, Claude Code qui utilise Gemma 4 sur Cloud Run comme modèle (voir plus bas).
 - [AGENTS.md](AGENTS.md) : tout le contexte pour un agent de code (Claude Code, Gemini CLI, Copilot…).
 
 ## Démarrage rapide (Mac)
@@ -73,6 +73,34 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 2. **Multimodal** : description d'une photo de la tour Eiffel (`npm run demo -- chemin/image.jpg` pour une autre).
 3. **Function calling** : heure et météo à Las Vegas, deux outils appelés en parallèle.
 4. **MCP** : Gemma 4 interroge le serveur MCP distant Context7 pour trouver la dernière version de Google ADK.
+
+## Démo bonus : Claude Code sur Gemma 4
+
+**Claude Code** (l'agent de code en terminal d'Anthropic) peut utiliser Gemma 4 sur Cloud Run à la place des modèles Claude : Ollama expose une API compatible Anthropic (`/v1/messages`), et Claude Code accepte une autre URL d'API avec `ANTHROPIC_BASE_URL`.
+
+```text
+ claude (terminal) ──▶ localhost:11435 ── gcloud run services proxy ──▶ Cloud Run "ollama-gemma4"
+                       API Messages d'Anthropic                         gemma4:e4b sur NVIDIA L4, contexte 64k
+```
+
+```bash
+cd adk && ../claude-code/claude-gemma4.sh
+```
+
+Le script ouvre le proxy `gcloud`, oriente tous les rôles de Claude Code (principal, rapide, sous-agents) vers `gemma4:e4b`, déclare le contexte de 64k, lance en mode `acceptEdits` et coupe les messages parasites au démarrage. Détails, variables et scénario : [claude-code/README.md](claude-code/README.md).
+
+Testé le 26/11/2026 (Claude Code 2.1.318, Ollama 0.40.18, L4) :
+
+| Demande | Tours | Durée | Résultat |
+| --- | --- | --- | --- |
+| « Liste les outils de tools.ts » | 2 | 7,8 s | réponse juste |
+| « Ajoute un FunctionTool get_moon_phase et branche-le dans agent.ts » | 5 | 50 s | 2 fichiers modifiés, `tsc` OK, mais calcul de la lune naïf (basé sur le jour du mois) |
+
+### Limites à annoncer
+
+- **Gemma 4 e4b n'est pas Claude** : très bien pour lire et expliquer du code ; il sait modifier plusieurs fichiers, mais la qualité de la logique générée est inégale (voir la phase de lune ci-dessus, un bon exemple à montrer). Le `gemma4:26b` (`SERVICE=ollama-gemma4-26b PORT=11436 MODEL=gemma4:26b`) est plus solide, mais plus lent et limité en contexte sur une L4.
+- Le premier appel après un déploiement charge le modèle en VRAM (environ 4 minutes) : chauffer le service avant de monter sur scène.
+- Les fonctions propres aux modèles Claude (cache de prompt, recherche web côté serveur, etc.) ne sont pas disponibles.
 
 ## Gemma 4 en bref
 
