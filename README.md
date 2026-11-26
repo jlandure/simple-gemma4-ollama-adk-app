@@ -84,10 +84,16 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 ```
 
 ```bash
-cd adk && ../claude-code/claude-gemma4.sh
+source claude-code/claude.sh
 ```
 
-Le script ouvre le proxy `gcloud`, oriente tous les rôles de Claude Code (principal, rapide, sous-agents) vers `gemma4:e4b`, déclare le contexte de 64k, lance en mode `acceptEdits` et coupe les messages parasites au démarrage. Détails, variables et scénario : [claude-code/README.md](claude-code/README.md).
+```bash
+cd adk && claude -p "Liste les outils définis dans agents/gemma4_assistant/tools.ts"
+```
+
+`claude_gemma4_off` remet le terminal sur les modèles Claude. Le fichier ne contient aucun secret ; les réglages perso vont dans `claude-code/claude.local.sh`, ignoré par Git. Variante tout-en-un : `cd adk && ../claude-code/claude-gemma4.sh`.
+
+Le lanceur ouvre le proxy `gcloud`, oriente tous les rôles de Claude Code (principal, rapide, sous-agents) vers `gemma4:e4b`, déclare le contexte de 64k, lance en mode `acceptEdits` et coupe les messages parasites au démarrage. Détails, variables et scénario : [claude-code/README.md](claude-code/README.md).
 
 Testé le 26/11/2026 (Claude Code 2.1.318, Ollama 0.40.18, L4) :
 

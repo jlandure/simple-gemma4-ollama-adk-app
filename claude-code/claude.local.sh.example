@@ -1,0 +1,6 @@
+# Copier en claude.local.sh (ignoré par Git) pour tes réglages et clés perso.
+# Chargé automatiquement par `source claude-code/claude.sh`.
+#
+# export GEMMA_MODEL=gemma4:e4b
+# export GEMMA_PORT=11435
+# export CONTEXT7_API_KEY=...   # utilisé par l'agent ADK (npm run demo / web)

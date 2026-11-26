@@ -24,7 +24,31 @@ Faire tourner **Claude Code** (l'agent de code en terminal d'Anthropic) avec **G
 - `gcloud` connecté avec un compte qui a `roles/run.invoker` sur `ollama-gemma4` (projet `jlandure-demos`).
 - Le service `ollama-gemma4` déployé avec 64k de contexte : `./ollama/deploy.sh` (défaut).
 
-## Lancer la démo
+## Lancer la démo avec un `claude` normal (recommandé)
+
+Dans ton terminal, depuis la racine du repo :
+
+```bash
+source claude-code/claude.sh
+```
+
+```bash
+cd adk && claude -p "Liste les outils définis dans agents/gemma4_assistant/tools.ts"
+```
+
+`source` exporte les variables ci-dessous dans **ce terminal uniquement** et ouvre le proxy `gcloud` s'il ne tourne pas. `claude` et `claude -p` utilisent ensuite Gemma 4. Pour revenir aux modèles Claude dans le même terminal :
+
+```bash
+claude_gemma4_off
+```
+
+**Aucun secret dans [claude.sh](claude.sh)** : `ANTHROPIC_AUTH_TOKEN=ollama` est un jeton factice qu'Ollama ne vérifie pas, et une éventuelle vraie `ANTHROPIC_API_KEY` est mise de côté (vidée pour ne jamais partir vers Ollama) puis restaurée par `claude_gemma4_off`. Tes réglages ou clés perso vont dans `claude-code/claude.local.sh`, ignoré par Git et chargé automatiquement (modèle : [claude.local.sh.example](claude.local.sh.example)).
+
+Options (à exporter avant le `source`) : `GEMMA_MODEL`, `GEMMA_SERVICE`, `GEMMA_PORT`, `GEMMA_CONTEXT`, `GEMMA_PROJECT`, `GEMMA_REGION`, `GEMMA_LOCAL=true`.
+
+Avec un `claude` « normal », c'est ton mode de permission habituel qui s'applique (auto chez toi) : le classifieur du mode auto sera alors Gemma lui-même. Pour la démo, préférer `claude --permission-mode acceptEdits` ou limiter les outils avec `--allowedTools "Read,Glob,Grep"`.
+
+## Variante : le lanceur tout-en-un
 
 ```bash
 cd adk
