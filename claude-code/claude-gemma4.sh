@@ -36,6 +36,20 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL"
 export CLAUDE_CODE_SUBAGENT_MODEL="$MODEL"
 # Pas d'appels annexes vers les serveurs d'Anthropic (télémétrie, mises à jour…).
 export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+# Taille réelle du contexte Ollama (Claude Code ne connaît pas ce modèle).
+export CLAUDE_CODE_MAX_CONTEXT_TOKENS=${CONTEXT_LENGTH:-65536}
+# Ollama n'implémente pas les "safeguards" côté serveur du mode auto : on reste sur
+# le chemin historique, ce qui supprime l'avertissement de facturation au démarrage.
+export CLAUDE_CODE_AUTO_MODE_SERVER=0
 
-echo "Claude Code -> ${MODEL} @ ${HOST}" >&2
-claude "$@"
+# Pas de mode auto par défaut : son classifieur de sécurité serait Gemma lui-même.
+# acceptEdits valide les éditions de fichiers et demande avant chaque commande.
+ARGS=("$@")
+if [[ " $* " != *" --permission-mode"* ]]; then
+  ARGS=(--permission-mode "${PERMISSION_MODE:-acceptEdits}" ${ARGS[@]+"${ARGS[@]}"})
+fi
+
+echo "Claude Code -> ${MODEL} @ ${HOST} (mode ${PERMISSION_MODE:-acceptEdits})" >&2
+# Claude Code logue "[claude-code:unrecognized_model]" pour tout modèle non-Claude ;
+# aucun réglage ne le coupe, on filtre donc cette ligne (et elle seule) de stderr.
+claude ${ARGS[@]+"${ARGS[@]}"} 2> >(grep --line-buffered -v '^\[claude-code:unrecognized_model\]' >&2)

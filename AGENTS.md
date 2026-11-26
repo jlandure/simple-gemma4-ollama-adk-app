@@ -94,7 +94,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 
   *mesuré avec holzmarkt-infos.png (3,4 Mo). Le `26b` apporte de la qualité, pas de la vitesse : pour une démo rapide, rester sur `e4b`.
 - `gemma4:e4b-mlx` (Apple Silicon, Ollama ≥ 0.31) : aucun gain sur M1 Pro (33,7 vs 34,5 tok/s en génération, prompt plus lent). Garder `gemma4:e4b` par défaut.
-- Claude Code fonctionne sur Gemma 4 via l'API compatible Anthropic d'Ollama (`/v1/messages`) : `claude-code/claude-gemma4.sh`. Son prompt système fait ~16 400 tokens, d'où le contexte à 64k. Testé : lecture de code OK (2 tours, 8 s), modification multi-fichiers OK (5 tours, 50 s) mais logique générée parfois naïve.
+- Claude Code fonctionne sur Gemma 4 via l'API compatible Anthropic d'Ollama (`/v1/messages`) : `claude-code/claude-gemma4.sh`. Son prompt système fait ~16 400 tokens, d'où le contexte à 64k. Le script fixe `CLAUDE_CODE_AUTO_MODE_SERVER=0`, `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, le mode `acceptEdits` (pas de mode auto : le classifieur serait Gemma) et filtre la ligne stderr `[claude-code:unrecognized_model]`, qu'aucun réglage ne coupe. Testé : lecture de code OK (2 tours, 8 s), modification multi-fichiers OK (5 tours, 50 s) mais logique générée parfois naïve.
 - `gcloud run services proxy` s'arrête quand le service est redéployé : le relancer après chaque `deploy.sh`.
 - Imports TypeScript avec extension `.js` (résolution `nodenext`).
 - Code et commentaires : commentaires en français, identifiants en anglais.

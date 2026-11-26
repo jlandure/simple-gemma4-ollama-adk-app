@@ -43,8 +43,12 @@ Le script ouvre le proxy `gcloud` s'il ne tourne pas déjà, règle les variable
 | `ANTHROPIC_API_KEY` | vide | évite d'utiliser une vraie clé Anthropic |
 | `ANTHROPIC_MODEL`, `ANTHROPIC_DEFAULT_*_MODEL`, `CLAUDE_CODE_SUBAGENT_MODEL` | `gemma4:e4b` | tous les rôles (principal, rapide, sous-agents) utilisent Gemma 4 |
 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | `1` | pas d'appels annexes vers Anthropic |
+| `CLAUDE_CODE_MAX_CONTEXT_TOKENS` | `65536` | taille réelle du contexte, que Claude Code ne peut pas deviner pour ce modèle |
+| `CLAUDE_CODE_AUTO_MODE_SERVER` | `0` | supprime l'avertissement « auto mode … classifier requests are billed as before » (Ollama n'implémente pas les safeguards serveur du mode auto) |
 
-Options du script : `MODEL`, `SERVICE`, `PORT`, `PROJECT`, `REGION`, et `LOCAL=true` pour utiliser l'Ollama du Mac.
+Le script lance aussi Claude Code en `--permission-mode acceptEdits` (modifiable avec `PERMISSION_MODE=manual`, ou en passant `--permission-mode` toi-même) : en mode auto, le classifieur de sécurité qui valide les actions serait Gemma 4 lui-même, ce qui n'est pas fiable. Enfin, il filtre la ligne `[claude-code:unrecognized_model]` que Claude Code écrit sur stderr pour tout modèle non-Claude, faute de réglage pour la couper.
+
+Options du script : `MODEL`, `SERVICE`, `PORT`, `PROJECT`, `REGION`, `PERMISSION_MODE`, `CONTEXT_LENGTH`, et `LOCAL=true` pour utiliser l'Ollama du Mac.
 
 ## Scénario de démo
 
