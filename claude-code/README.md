@@ -44,9 +44,9 @@ claude_gemma4_off
 
 **Aucun secret dans [claude.sh](claude.sh)** : `ANTHROPIC_AUTH_TOKEN=ollama` est un jeton factice qu'Ollama ne vérifie pas, et une éventuelle vraie `ANTHROPIC_API_KEY` est mise de côté (vidée pour ne jamais partir vers Ollama) puis restaurée par `claude_gemma4_off`. Tes réglages ou clés perso vont dans `claude-code/claude.local.sh`, ignoré par Git et chargé automatiquement (modèle : [claude.local.sh.example](claude.local.sh.example)).
 
-Options (à exporter avant le `source`) : `GEMMA_MODEL`, `GEMMA_SERVICE`, `GEMMA_PORT`, `GEMMA_CONTEXT`, `GEMMA_PROJECT`, `GEMMA_REGION`, `GEMMA_LOCAL=true`.
+Options (à exporter avant le `source`) : `GEMMA_MODEL`, `GEMMA_SERVICE`, `GEMMA_PORT`, `GEMMA_CONTEXT`, `GEMMA_PROJECT`, `GEMMA_REGION`, `GEMMA_PERMISSION_MODE`, `GEMMA_LOCAL=true`.
 
-Avec un `claude` « normal », c'est ton mode de permission habituel qui s'applique (auto chez toi) : le classifieur du mode auto sera alors Gemma lui-même. Pour la démo, préférer `claude --permission-mode acceptEdits` ou limiter les outils avec `--allowedTools "Read,Glob,Grep"`.
+`claude` est lancé en `--permission-mode acceptEdits` (les éditions de fichiers sont validées, les commandes demandent confirmation) plutôt qu'en mode auto, dont le classifieur de sécurité serait Gemma lui-même. Un `--permission-mode` passé explicitement reste prioritaire ; `GEMMA_PERMISSION_MODE` change le défaut.
 
 ## Variante : le lanceur tout-en-un
 

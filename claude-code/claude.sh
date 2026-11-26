@@ -61,7 +61,13 @@ export CLAUDE_CODE_AUTO_MODE_SERVER=0
 
 # `claude` reste la vraie commande ; on filtre seulement la ligne
 # "[claude-code:unrecognized_model]" écrite sur stderr pour tout modèle non-Claude.
+# Mode acceptEdits par défaut (pas le mode auto, dont le classifieur serait Gemma) ;
+# un --permission-mode passé explicitement reste prioritaire.
 claude() {
+  case " $* " in
+    *" --permission-mode"*) set -- "$@" ;;
+    *) set -- --permission-mode "${GEMMA_PERMISSION_MODE:-acceptEdits}" "$@" ;;
+  esac
   command claude "$@" 2> >(grep --line-buffered -v '^\[claude-code:unrecognized_model\]' >&2)
 }
 

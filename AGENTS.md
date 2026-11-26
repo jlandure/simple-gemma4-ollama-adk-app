@@ -21,7 +21,7 @@ adk/                              # l'agent (Node.js ≥ 22, ESM, TypeScript ex�
   deploy.sh                       # adk deploy cloud_run + compte de service gemma4-adk-agent
   .npmrc                          # force registry.npmjs.org (le ~/.npmrc global pointe vers un Artifactory client)
 claude-code/
-  claude.sh                       # à sourcer : `claude` du terminal -> Gemma 4 ; claude_gemma4_off pour revenir
+  claude.sh                       # à sourcer : `claude` du terminal -> Gemma 4 en acceptEdits ; claude_gemma4_off pour revenir
   claude.local.sh.example         # modèle pour claude.local.sh (ignoré par Git : clés et réglages perso)
   claude-gemma4.sh                # lanceur tout-en-un (acceptEdits, filtre stderr)
   README.md                       # démo Claude Code + Gemma 4 Cloud Run
