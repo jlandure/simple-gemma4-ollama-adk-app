@@ -11,7 +11,7 @@ adk/
 │   ├── ollama_llm.ts   # OllamaLlm : BaseLlm ADK -> API /api/chat d'Ollama
 │   └── tools.ts        # FunctionTool : get_current_time, get_weather (Open-Meteo)
 ├── demo.ts             # démo scriptée en 4 étapes
-├── images/             # images pour la démo multimodale
+├── images/             # tour-eiffel.jpg (défaut), holzmarkt-infos.png
 └── deploy.sh           # déploiement Cloud Run (adk deploy cloud_run)
 ```
 
@@ -68,11 +68,13 @@ npm run chat     # conversation dans le terminal
 
 Variables d'environnement (voir [.env.example](.env.example)) : `OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_THINK`, `CONTEXT7_API_KEY`, `DEMO_IMAGE`.
 
-Sur Apple Silicon, la variante `gemma4:e4b-mlx` (Ollama ≥ 0.31) est plus rapide :
+La variante Apple Silicon `gemma4:e4b-mlx` (Ollama ≥ 0.31) existe, mais sur un M1 Pro elle n'apporte aucun gain mesurable (~34 tokens/s dans les deux cas) :
 
 ```bash
 OLLAMA_MODEL=gemma4:e4b-mlx npm run demo
 ```
+
+Crédit photo `images/tour-eiffel.jpg` : [partirvoirlemonde.com](https://www.partirvoirlemonde.com/).
 
 ## Avec Ollama sur Cloud Run
 

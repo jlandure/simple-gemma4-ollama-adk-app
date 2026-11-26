@@ -67,7 +67,7 @@ await ask('Traduction', {
 });
 
 const imagePath = path.resolve(
-  process.argv[2] ?? process.env.DEMO_IMAGE ?? fileURLToPath(new URL('./images/holzmarkt-infos.png', import.meta.url)),
+  process.argv[2] ?? process.env.DEMO_IMAGE ?? fileURLToPath(new URL('./images/tour-eiffel.jpg', import.meta.url)),
 );
 const image = await fs.readFile(imagePath);
 await ask(`Description d’image (${path.basename(imagePath)})`, {

@@ -59,7 +59,7 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 ## Ce que montre la démo
 
 1. **Traduction** FR -> EN.
-2. **Multimodal** : description d'une image (`npm run demo -- chemin/image.jpg`).
+2. **Multimodal** : description d'une photo de la tour Eiffel (`npm run demo -- chemin/image.jpg` pour une autre).
 3. **Function calling** : heure et météo à Las Vegas, deux outils appelés en parallèle.
 4. **MCP** : Gemma 4 interroge le serveur MCP distant Context7 pour trouver la dernière version de Google ADK.
 
@@ -68,7 +68,7 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 | Modèle Ollama | Usage conseillé |
 | --- | --- |
 | `gemma4:e2b` | CPU, appareils modestes |
-| `gemma4:e4b` / `gemma4:e4b-mlx` | Mac Apple Silicon (MLX : Ollama ≥ 0.31), GPU L4 |
+| `gemma4:e4b` | Mac Apple Silicon et GPU L4 (le plus rapide pour la démo) |
 | `gemma4:26b` | MoE (4B actifs), meilleure qualité, tient sur une L4 |
 | `gemma4:31b` | dense, le plus gros |
 
