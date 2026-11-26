@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+dist/
+*.log
+npm-debug.log*
+
+# ADK
+.adk/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

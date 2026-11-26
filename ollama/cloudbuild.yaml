@@ -1,0 +1,12 @@
+# Build de l'image Ollama + Gemma 4 (le modèle de ~10 Go est téléchargé pendant le build).
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '--build-arg', 'MODEL=${_MODEL}', '-t', '${_IMAGE}', '.']
+images: ['${_IMAGE}']
+substitutions:
+  _MODEL: gemma4:e4b
+  _IMAGE: europe-west1-docker.pkg.dev/jlandure-demos/cloud-run-source-deploy/ollama-gemma4:e4b
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 200
+timeout: 3600s

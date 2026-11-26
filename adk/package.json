@@ -1,0 +1,30 @@
+{
+  "name": "simple-gemma4-adk-agent",
+  "version": "1.0.0",
+  "description": "Agent ADK (TypeScript) avec Gemma 4 servi par Ollama, en local et sur Cloud Run",
+  "main": "agents/gemma4_assistant/agent.ts",
+  "scripts": {
+    "web": "adk web agents",
+    "chat": "adk run agents/gemma4_assistant/agent.ts",
+    "api": "adk api_server agents",
+    "demo": "tsx demo.ts",
+    "typecheck": "tsc",
+    "deploy": "./deploy.sh"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@google/adk": "^2.5.0",
+    "google-auth-library": "^11.3.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@google/adk-devtools": "^2.5.0",
+    "@types/node": "^26.6.11",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
