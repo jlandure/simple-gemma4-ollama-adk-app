@@ -28,12 +28,18 @@ gcloud run services add-iam-policy-binding "$OLLAMA_SERVICE" \
 AUTH_FLAG=--no-allow-unauthenticated
 [[ "${PUBLIC:-false}" == "true" ]] && AUTH_FLAG=--allow-unauthenticated
 
+# Origines acceptées par le serveur ADK (sinon l'UI répond "Failed to create session",
+# en 403 "origin not allowed") : le proxy local et l'URL Cloud Run du service.
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT" --format 'value(projectNumber)')
+ALLOW_ORIGINS=${ALLOW_ORIGINS:-http://localhost:8080,https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app}
+
 # adk-devtools 2.5 transmet à gcloud tout argument qui n'est pas une option ADK :
 # toujours écrire --option=valeur, et pas de séparateur "--".
 npx adk deploy cloud_run agents/gemma4_assistant \
   --project="$PROJECT" --region="$REGION" \
   --service_name="$SERVICE" \
   --with_ui \
+  --allow_origins="$ALLOW_ORIGINS" \
   --service-account="$SA" \
   --set-env-vars="OLLAMA_HOST=${OLLAMA_URL},OLLAMA_MODEL=${MODEL}" \
   --memory=1Gi --timeout=600 --max-instances=2 \

@@ -78,6 +78,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 - ADK ferme la session MCP après chaque appel, ce qui logue une fausse erreur « MCP transport error … aborted » : `agent.ts` la rétrograde en `debug`.
 - Context7 n'indexe pas de numéro de version pour ADK JS (seulement Python et Go) : ne pas promettre la version npm exacte dans la démo.
 - `adk deploy cloud_run` (adk-devtools 2.5.0) transmet à `gcloud` tout argument qui n'est pas une option ADK, y compris les valeurs séparées par un espace et le séparateur `--` : écrire **toutes** les options en `--option=valeur`, sans `--`, et le chemin de l'agent en premier.
+- Le serveur ADK refuse toute origine non déclarée (`403 Forbidden: origin not allowed`, affiché « Failed to create session » dans l'UI) : `adk/deploy.sh` passe `--allow_origins` avec `http://localhost:8080` (proxy) et l'URL Cloud Run du service. Variable `ALLOW_ORIGINS` pour en ajouter.
 - Ollama 0.40 fait un `MkdirAll` sur `$OLLAMA_MODELS/manifests-v2` au chargement d'un modèle : le bucket doit contenir `manifests-v2/.keep` (créé par `cloudbuild-gcs.yaml`) et le volume est monté avec `implicit-dirs`.
 - Démarrage à froid sur L4 : ~2 min 30 pour `e4b` (image), plus pour `26b` (GCS). Toute mise à jour du service crée une révision et recharge le modèle : faire un appel de chauffe après chaque déploiement.
 - Temps mesurés à chaud, Ollama 0.40.18 (démo complète, image = tour Eiffel) :
