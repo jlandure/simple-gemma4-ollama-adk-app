@@ -35,6 +35,16 @@ npm run web
 ## Sur Cloud Run (projet `jlandure-demos`)
 
 ```bash
+./ollama/deploy.sh
+```
+
+```bash
+./adk/deploy.sh
+```
+
+En bonus, le MoE 26B (plus de qualité, pas plus rapide) :
+
+```bash
 MODEL=gemma4:26b SERVICE=ollama-gemma4-26b ./ollama/deploy.sh
 ```
 
@@ -52,7 +62,7 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 | --- | --- | --- |
 | `ollama-gemma4` | Ollama, GPU L4 | `gemma4:e4b` dans l'image |
 | `ollama-gemma4-26b` | Ollama, GPU L4 | `gemma4:26b` (MoE) dans Cloud Storage, monté en volume |
-| `gemma4-adk-agent` | ADK API server + Web UI | appelle `ollama-gemma4-26b` |
+| `gemma4-adk-agent` | ADK API server + Web UI | appelle `ollama-gemma4` (e4b) |
 
 **Tout est privé.** Les services Ollama n'acceptent que le compte de service de l'agent (`gemma4-adk-agent`, rôle `roles/run.invoker`) et les utilisateurs du projet via `gcloud run services proxy`. L'agent s'authentifie auprès d'Ollama avec un ID token Google, sans clé ni secret.
 

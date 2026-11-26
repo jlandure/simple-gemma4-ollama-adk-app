@@ -91,8 +91,10 @@ OLLAMA_HOST=http://localhost:11435 OLLAMA_MODEL=gemma4:26b npm run demo
 ## Déployer l'agent sur Cloud Run
 
 ```bash
-MODEL=gemma4:26b OLLAMA_SERVICE=ollama-gemma4-26b ./deploy.sh
+./deploy.sh
 ```
+
+Par défaut l'agent appelle `ollama-gemma4` (e4b, le plus rapide). Pour le 26B : `MODEL=gemma4:26b OLLAMA_SERVICE=ollama-gemma4-26b ./deploy.sh`.
 
 Le script :
 

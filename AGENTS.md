@@ -62,7 +62,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 | --- | --- | --- |
 | `ollama-gemma4` | Ollama + `gemma4:e4b` **embarqué dans l'image** (9,6 Go) | privé |
 | `ollama-gemma4-26b` | Ollama + `gemma4:26b` (MoE, ~18 Go) **dans Cloud Storage**, monté en volume FUSE en lecture seule | privé |
-| `gemma4-adk-agent` | ADK API server + Web UI (`adk deploy cloud_run --with_ui`) | privé |
+| `gemma4-adk-agent` | ADK API server + Web UI (`adk deploy cloud_run --with_ui`), branché sur `ollama-gemma4` (e4b), app `agent` | privé |
 
 - **Chargement du modèle** (doc Google « GPU best practices ») : image conteneur pour les modèles < 10 Go, Cloud Storage au-delà. Le mode GCS utilise Direct VPC (`default`, egress `all-traffic`), l'accès privé Google sur le sous-réseau `default` d'`europe-west1`, et l'option FUSE `enable-buffered-read`. `OLLAMA_NOPRUNE=true` car le volume est en lecture seule.
 - **Comptes de service** : `ollama-gemma4@` (lecture du bucket), `gemma4-adk-agent@` (`roles/run.invoker` sur les services Ollama).
