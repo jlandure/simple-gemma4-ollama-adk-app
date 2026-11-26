@@ -30,6 +30,8 @@ MODEL=gemma4:26b SERVICE=ollama-gemma4-26b ./deploy.sh
 | `STORAGE` | selon le modèle | `image` ou `gcs` |
 | `GPU` | `true` | `false` pour une variante CPU |
 | `SKIP_BUILD` | `false` | redéployer sans rebuild de l'image ni resync du bucket |
+| `CONTEXT_LENGTH` | `65536` | contexte Ollama (64k pour Claude Code) |
+| `NUM_PARALLEL` | `4` | requêtes traitées en parallèle |
 | `PROJECT`, `REGION`, `BUCKET` | `jlandure-demos`, `europe-west1`, `<projet>-ollama-models` | cible |
 
 Chaque service : 1 GPU L4, 8 vCPU, 32 Gio, 4 requêtes en parallèle, 1 instance max, compte de service dédié `ollama-gemma4@` (lecture du bucket seulement), **pas d'accès public**.

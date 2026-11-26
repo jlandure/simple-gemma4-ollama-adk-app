@@ -20,6 +20,9 @@ adk/                              # l'agent (Node.js ≥ 22, ESM, TypeScript ex�
   images/                         # images de démo (tour-eiffel.jpg par défaut, holzmarkt-infos.png)
   deploy.sh                       # adk deploy cloud_run + compte de service gemma4-adk-agent
   .npmrc                          # force registry.npmjs.org (le ~/.npmrc global pointe vers un Artifactory client)
+claude-code/
+  claude-gemma4.sh                # lance Claude Code sur Gemma 4 (ANTHROPIC_BASE_URL -> proxy Ollama)
+  README.md                       # démo Claude Code + Gemma 4 Cloud Run
 ollama/
   Dockerfile                      # Ollama 0.40.18 + modèle embarqué (mode STORAGE=image)
   cloudbuild.yaml                 # build de l'image avec modèle embarqué
@@ -67,7 +70,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 - **Chargement du modèle** (doc Google « GPU best practices ») : image conteneur pour les modèles < 10 Go, Cloud Storage au-delà. Le mode GCS utilise Direct VPC (`default`, egress `all-traffic`), l'accès privé Google sur le sous-réseau `default` d'`europe-west1`, et l'option FUSE `enable-buffered-read`. `OLLAMA_NOPRUNE=true` car le volume est en lecture seule.
 - **Comptes de service** : `ollama-gemma4@` (lecture du bucket), `gemma4-adk-agent@` (`roles/run.invoker` sur les services Ollama).
 - **Authentification** : l'agent appelle Ollama avec un ID token (audience = URL du service) obtenu par `google-auth-library`. Depuis un poste, on passe par `gcloud run services proxy <service> --port <port>`.
-- **GPU** : 1 L4, 8 vCPU, 32 Gio, `--no-gpu-zonal-redundancy`, `--max-instances 1`, `OLLAMA_NUM_PARALLEL=4`, `OLLAMA_KEEP_ALIVE=-1`, `OLLAMA_CONTEXT_LENGTH=16384`.
+- **GPU** : 1 L4, 8 vCPU, 32 Gio, `--no-gpu-zonal-redundancy`, `--max-instances 1`, `OLLAMA_NUM_PARALLEL=4`, `OLLAMA_KEEP_ALIVE=-1`, `OLLAMA_CONTEXT_LENGTH=65536` (variable `CONTEXT_LENGTH` de `ollama/deploy.sh`, nécessaire pour Claude Code).
 - **Coûts** : `deploy.sh` ne fixe pas `--min-instances` (0 par défaut). Passer à 1 avant une démo avec `gcloud run services update <service> --min-instances 1`, puis revenir à 0 : une L4 chaude est facturée en continu.
 
 ## Conventions et pièges connus
@@ -91,6 +94,8 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 
   *mesuré avec holzmarkt-infos.png (3,4 Mo). Le `26b` apporte de la qualité, pas de la vitesse : pour une démo rapide, rester sur `e4b`.
 - `gemma4:e4b-mlx` (Apple Silicon, Ollama ≥ 0.31) : aucun gain sur M1 Pro (33,7 vs 34,5 tok/s en génération, prompt plus lent). Garder `gemma4:e4b` par défaut.
+- Claude Code fonctionne sur Gemma 4 via l'API compatible Anthropic d'Ollama (`/v1/messages`) : `claude-code/claude-gemma4.sh`. Son prompt système fait ~16 400 tokens, d'où le contexte à 64k. Testé : lecture de code OK (2 tours, 8 s), modification multi-fichiers OK (5 tours, 50 s) mais logique générée parfois naïve.
+- `gcloud run services proxy` s'arrête quand le service est redéployé : le relancer après chaque `deploy.sh`.
 - Imports TypeScript avec extension `.js` (résolution `nodenext`).
 - Code et commentaires : commentaires en français, identifiants en anglais.
 - Commits : gitmoji + description courte en anglais, terminer par `Co-authored-by: Claude Code (TechTown)`.

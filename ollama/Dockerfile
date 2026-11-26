@@ -10,8 +10,8 @@ ENV OLLAMA_HOST=0.0.0.0:8080 \
     OLLAMA_DEBUG=false \
     # Ne jamais décharger le modèle de la mémoire GPU
     OLLAMA_KEEP_ALIVE=-1 \
-    # Contexte suffisant pour images + outils, sans gaspiller la VRAM
-    OLLAMA_CONTEXT_LENGTH=16384 \
+    # Contexte suffisant pour Claude Code (surchargé par deploy.sh)
+    OLLAMA_CONTEXT_LENGTH=65536 \
     MODEL=${MODEL}
 
 RUN ollama serve & \

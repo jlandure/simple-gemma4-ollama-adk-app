@@ -10,6 +10,7 @@
 #   MODEL=gemma4:26b SERVICE=ollama-gemma4-26b ./deploy.sh   # MoE 26B, GCS (auto)
 #   GPU=false MODEL=gemma4:e2b SERVICE=ollama-gemma4-cpu ./deploy.sh
 #   SKIP_BUILD=true ...                                      # sans rebuild de l'image / resync du bucket
+#   CONTEXT_LENGTH=16384 NUM_PARALLEL=2 ...                  # moins de VRAM (ex. pour le 26b)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -18,6 +19,9 @@ REGION=${REGION:-europe-west1}
 MODEL=${MODEL:-gemma4:e4b}
 SERVICE=${SERVICE:-ollama-gemma4}
 GPU=${GPU:-true}
+# 64k tokens : assez pour Claude Code (son prompt système dépasse 16k tokens).
+CONTEXT_LENGTH=${CONTEXT_LENGTH:-65536}
+NUM_PARALLEL=${NUM_PARALLEL:-4}
 OLLAMA_VERSION=0.40.18
 BUCKET=${BUCKET:-${PROJECT}-ollama-models}
 SA_NAME=${SA_NAME:-ollama-gemma4}
@@ -33,7 +37,7 @@ gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1 
   gcloud iam service-accounts create "$SA_NAME" --project "$PROJECT" \
     --display-name "Ollama Gemma 4 (Cloud Run GPU)"
 
-ENV="OLLAMA_KEEP_ALIVE=-1,OLLAMA_CONTEXT_LENGTH=16384"
+ENV="OLLAMA_KEEP_ALIVE=-1,OLLAMA_CONTEXT_LENGTH=${CONTEXT_LENGTH}"
 STORAGE_ARGS=()
 
 if [[ "$STORAGE" == "gcs" ]]; then
@@ -66,7 +70,7 @@ fi
 
 if [[ "$GPU" == "true" ]]; then
   HW=(--gpu 1 --gpu-type nvidia-l4 --no-gpu-zonal-redundancy --concurrency 4)
-  ENV="${ENV},OLLAMA_NUM_PARALLEL=4"
+  ENV="${ENV},OLLAMA_NUM_PARALLEL=${NUM_PARALLEL}"
 else
   HW=(--concurrency 1)
 fi

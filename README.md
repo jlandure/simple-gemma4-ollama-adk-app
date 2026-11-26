@@ -16,6 +16,7 @@ Suite de [simple-gemma3-ollama-langchainjs-app](https://github.com/jlandure/simp
 
 - [adk/](adk/README.md) : l'agent ADK (TypeScript), son connecteur Ollama, ses outils, le MCP Context7, une démo scriptée et le déploiement Cloud Run.
 - [ollama/](ollama/README.md) : Ollama + Gemma 4 sur Cloud Run GPU (modèle dans l'image ou dans Cloud Storage).
+- [claude-code/](claude-code/README.md) : démo bonus, Claude Code qui utilise Gemma 4 sur Cloud Run comme modèle.
 - [AGENTS.md](AGENTS.md) : tout le contexte pour un agent de code (Claude Code, Gemini CLI, Copilot…).
 
 ## Démarrage rapide (Mac)
