@@ -37,8 +37,10 @@ gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1 
   gcloud iam service-accounts create "$SA_NAME" --project "$PROJECT" \
     --display-name "Ollama Gemma 4 (Cloud Run GPU)"
 
-ENV="OLLAMA_KEEP_ALIVE=-1,OLLAMA_CONTEXT_LENGTH=${CONTEXT_LENGTH}"
+# MODEL : le modèle que entrypoint.sh précharge avant d'ouvrir le port 8080.
+ENV="MODEL=${MODEL},OLLAMA_KEEP_ALIVE=-1,OLLAMA_CONTEXT_LENGTH=${CONTEXT_LENGTH}"
 STORAGE_ARGS=()
+REGISTRY="${REGION}-docker.pkg.dev/${PROJECT}/cloud-run-source-deploy"
 
 if [[ "$STORAGE" == "gcs" ]]; then
   gcloud storage buckets describe "gs://${BUCKET}" --project "$PROJECT" >/dev/null 2>&1 ||
@@ -49,22 +51,25 @@ if [[ "$STORAGE" == "gcs" ]]; then
   # Direct VPC + accès privé Google : chemin réseau rapide vers Cloud Storage.
   gcloud compute networks subnets update default --project "$PROJECT" --region "$REGION" \
     --enable-private-ip-google-access
+  # Image légère (Ollama + entrypoint.sh, sans modèle) : le modèle vient du bucket.
+  IMAGE="${REGISTRY}/ollama-gemma4:runtime-${OLLAMA_VERSION}"
   if [[ "${SKIP_BUILD:-false}" != "true" ]]; then
     gcloud builds submit --no-source --project "$PROJECT" --region "$REGION" \
       --config cloudbuild-gcs.yaml --substitutions "_MODEL=${MODEL},_BUCKET=${BUCKET}"
+    gcloud builds submit . --project "$PROJECT" --region "$REGION" \
+      --config cloudbuild.yaml --substitutions "_MODEL=${MODEL},_IMAGE=${IMAGE},_BAKE_MODEL=false"
   fi
-  IMAGE="docker.io/ollama/ollama:${OLLAMA_VERSION}"
-  ENV="OLLAMA_HOST=0.0.0.0:8080,OLLAMA_MODELS=/models,OLLAMA_NOPRUNE=true,${ENV}"
+  ENV="OLLAMA_MODELS=/models,OLLAMA_NOPRUNE=true,${ENV}"
   STORAGE_ARGS=(
     --add-volume "name=models,type=cloud-storage,bucket=${BUCKET},readonly=true,mount-options=implicit-dirs;enable-buffered-read=true"
     --add-volume-mount "volume=models,mount-path=/models"
     --network default --subnet default --vpc-egress all-traffic
   )
 else
-  IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/cloud-run-source-deploy/ollama-gemma4:${MODEL#gemma4:}"
+  IMAGE="${REGISTRY}/ollama-gemma4:${MODEL#gemma4:}"
   if [[ "${SKIP_BUILD:-false}" != "true" ]]; then
     gcloud builds submit . --project "$PROJECT" --region "$REGION" \
-      --config cloudbuild.yaml --substitutions "_MODEL=${MODEL},_IMAGE=${IMAGE}"
+      --config cloudbuild.yaml --substitutions "_MODEL=${MODEL},_IMAGE=${IMAGE},_BAKE_MODEL=true"
   fi
 fi
 
@@ -77,6 +82,10 @@ fi
 
 # Service privé : seuls les comptes avec roles/run.invoker (l'agent ADK, vous via
 # `gcloud run services proxy`) peuvent appeler Ollama.
+# Sonde de démarrage : entrypoint.sh n'ouvre le port 8080 qu'une fois le modèle en
+# mémoire. On laisse jusqu'à 15 min (90 × 10 s) au chargement, au lieu des 240 s par
+# défaut, trop justes pour un modèle de 7 à 18 Go. Le déploiement attend donc que
+# le modèle soit prêt, et l'ancienne révision sert le trafic en attendant.
 gcloud run deploy "$SERVICE" \
   --project "$PROJECT" --region "$REGION" \
   --image "$IMAGE" \
@@ -84,6 +93,7 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars "$ENV" \
   ${STORAGE_ARGS[@]+"${STORAGE_ARGS[@]}"} \
   "${HW[@]}" \
+  --startup-probe "tcpSocket.port=8080,initialDelaySeconds=0,periodSeconds=10,timeoutSeconds=10,failureThreshold=90" \
   --cpu 8 --memory 32Gi --no-cpu-throttling \
   --max-instances 1 --timeout 600 \
   --no-allow-unauthenticated

@@ -26,8 +26,9 @@ claude-code/
   claude-gemma4.sh                # lanceur tout-en-un (acceptEdits, filtre stderr)
   README.md                       # démo Claude Code + Gemma 4 Cloud Run
 ollama/
-  Dockerfile                      # Ollama 0.40.18 + modèle embarqué (mode STORAGE=image)
-  cloudbuild.yaml                 # build de l'image avec modèle embarqué
+  Dockerfile                      # Ollama 0.40.18 + socat + entrypoint.sh, modèle embarqué si BAKE_MODEL=true
+  entrypoint.sh                   # précharge et chauffe le modèle, puis seulement ouvre le port 8080 (socat -> port interne 11434)
+  cloudbuild.yaml                 # build de l'image (_BAKE_MODEL=true : avec modèle ; false : image légère pour GCS)
   cloudbuild-gcs.yaml             # ollama pull puis rsync vers gs://jlandure-demos-ollama-models
   deploy.sh                       # déploiement Cloud Run GPU, STORAGE=image|gcs
 ```
@@ -65,7 +66,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 
 | Service | Contenu | Accès |
 | --- | --- | --- |
-| `ollama-gemma4` | Ollama + `gemma4:e4b` **embarqué dans l'image** (9,6 Go) | privé |
+| `ollama-gemma4` | Ollama + `gemma4:e4b` **embarqué dans l'image** (~6,6 Go) | privé |
 | `ollama-gemma4-26b` | Ollama + `gemma4:26b` (MoE, ~18 Go) **dans Cloud Storage**, monté en volume FUSE en lecture seule | privé |
 | `gemma4-adk-agent` | ADK API server + Web UI (`adk deploy cloud_run --with_ui`), branché sur `ollama-gemma4` (e4b), app `agent` | privé |
 
@@ -85,7 +86,8 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 - `adk deploy cloud_run` (adk-devtools 2.5.0) transmet à `gcloud` tout argument qui n'est pas une option ADK, y compris les valeurs séparées par un espace et le séparateur `--` : écrire **toutes** les options en `--option=valeur`, sans `--`, et le chemin de l'agent en premier.
 - Le serveur ADK refuse toute origine non déclarée (`403 Forbidden: origin not allowed`, affiché « Failed to create session » dans l'UI) : `adk/deploy.sh` passe `--allow_origins` avec `http://localhost:8080` (proxy) et l'URL Cloud Run du service. Variable `ALLOW_ORIGINS` pour en ajouter.
 - Ollama 0.40 fait un `MkdirAll` sur `$OLLAMA_MODELS/manifests-v2` au chargement d'un modèle : le bucket doit contenir `manifests-v2/.keep` (créé par `cloudbuild-gcs.yaml`) et le volume est monté avec `implicit-dirs`.
-- Démarrage à froid sur L4 : ~2 min 30 pour `e4b` (image), plus pour `26b` (GCS). Toute mise à jour du service crée une révision et recharge le modèle : faire un appel de chauffe après chaque déploiement.
+- Démarrage à froid sur L4 : ~2 min 30 pour `e4b` (image), plus pour `26b` (GCS). Toute mise à jour du service crée une révision et recharge le modèle.
+- Ollama ouvre son port avant d'avoir chargé le modèle : la sonde TCP de Cloud Run passerait trop tôt. `ollama/entrypoint.sh` lance Ollama sur le port interne 11434, précharge `$MODEL` (`ollama run $MODEL ""`), lance une génération de chauffe (prompt de plus de 512 tokens + `warmup.jpg`), puis ouvre le port 8080 avec socat. Sans cette chauffe, le premier calcul GPU coûte ~57 s sur L4 (et ~40 s pour la première image), même modèle chargé : un prompt vide ne calcule rien. Toujours rediriger stdin (`</dev/null`) : hors terminal, `ollama run` lit stdin et attendrait indéfiniment. `deploy.sh` règle la sonde de démarrage à 15 min (`failureThreshold=90`, `periodSeconds=10`) : le défaut de 240 s est trop court. La variable `MODEL` est obligatoire dans le service. Le serveur interne doit écouter sur `0.0.0.0` : lié à `127.0.0.1`, Ollama répond 403 à toute requête dont l'en-tête `Host` n'est pas local, ce qui est le cas derrière socat (`xxx.run.app`).
 - Temps mesurés à chaud, Ollama 0.40.18 (démo complète, image = tour Eiffel) :
 
   | Cible | Traduction | Image | Outils | MCP |

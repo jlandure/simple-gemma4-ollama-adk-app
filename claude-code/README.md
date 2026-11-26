@@ -108,5 +108,5 @@ Le prompt envoyé par Claude Code pèse environ **16 400 tokens** avant même la
 ## Limites à annoncer
 
 - **Gemma 4 e4b n'est pas Claude** : très bien pour lire et expliquer du code ; il sait modifier plusieurs fichiers, mais la qualité de la logique générée est inégale (voir la phase de lune ci-dessus, un bon exemple à montrer). Le `gemma4:26b` (`SERVICE=ollama-gemma4-26b PORT=11436 MODEL=gemma4:26b`) est plus solide, mais plus lent et limité en contexte sur une L4.
-- Le premier appel après un déploiement charge le modèle en VRAM (environ 4 minutes) : chauffer le service avant de monter sur scène.
+- Chaque démarrage d'instance charge le modèle en VRAM (2 à 4 minutes). Le déploiement attend que le modèle soit prêt, mais après un passage à zéro instance, le premier appel attend ce chargement : passer à `--min-instances 1` avant de monter sur scène.
 - Les fonctions propres aux modèles Claude (cache de prompt, recherche web côté serveur, etc.) ne sont pas disponibles.

@@ -105,7 +105,7 @@ Testé le 26/11/2026 (Claude Code 2.1.318, Ollama 0.40.18, L4) :
 ### Limites à annoncer
 
 - **Gemma 4 e4b n'est pas Claude** : très bien pour lire et expliquer du code ; il sait modifier plusieurs fichiers, mais la qualité de la logique générée est inégale (voir la phase de lune ci-dessus, un bon exemple à montrer). Le `gemma4:26b` (`SERVICE=ollama-gemma4-26b PORT=11436 MODEL=gemma4:26b`) est plus solide, mais plus lent et limité en contexte sur une L4.
-- Le premier appel après un déploiement charge le modèle en VRAM (environ 4 minutes) : chauffer le service avant de monter sur scène.
+- Chaque démarrage d'instance charge le modèle en VRAM (2 à 4 minutes). Le déploiement attend que le modèle soit prêt, mais après un passage à zéro instance, le premier appel attend ce chargement : passer à `--min-instances 1` avant de monter sur scène.
 - Les fonctions propres aux modèles Claude (cache de prompt, recherche web côté serveur, etc.) ne sont pas disponibles.
 
 ## Gemma 4 en bref
@@ -114,7 +114,8 @@ Testé le 26/11/2026 (Claude Code 2.1.318, Ollama 0.40.18, L4) :
 | --- | --- |
 | `gemma4:e2b` | CPU, appareils modestes |
 | `gemma4:e4b` | Mac Apple Silicon et GPU L4 (le plus rapide pour la démo) |
+| `gemma4:12b` | taille intermédiaire (juin 2026), annoncé proche du 26B pour moins de la moitié de la mémoire, entrée audio |
 | `gemma4:26b` | MoE (4B actifs), meilleure qualité, tient sur une L4 |
 | `gemma4:31b` | dense, le plus gros |
 
-Tous gèrent texte + image, function calling et un mode « thinking ».
+Tous gèrent texte + image, function calling et un mode « thinking ». Ollama propose aussi des variantes QAT (`-it-qat`, entraînées pour la quantification 4 bits, plus légères) et MTP (`-mtp-`, décodage spéculatif annoncé jusqu'à 3 fois plus rapide), non testées dans ce dépôt.

@@ -1,10 +1,21 @@
-# Build de l'image Ollama + Gemma 4 (le modèle de ~10 Go est téléchargé pendant le build).
+# Build de l'image Ollama + Gemma 4.
+# _BAKE_MODEL=true  : le modèle (~6,6 Go pour e4b) est téléchargé pendant le build et embarqué (STORAGE=image).
+# _BAKE_MODEL=false : image légère sans modèle, qui le lit sur le volume Cloud Storage (STORAGE=gcs).
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: ['build', '--build-arg', 'MODEL=${_MODEL}', '-t', '${_IMAGE}', '.']
+    args:
+      - build
+      - --build-arg
+      - MODEL=${_MODEL}
+      - --build-arg
+      - BAKE_MODEL=${_BAKE_MODEL}
+      - -t
+      - ${_IMAGE}
+      - .
 images: ['${_IMAGE}']
 substitutions:
   _MODEL: gemma4:e4b
+  _BAKE_MODEL: 'true'
   _IMAGE: europe-west1-docker.pkg.dev/jlandure-demos/cloud-run-source-deploy/ollama-gemma4:e4b
 options:
   machineType: E2_HIGHCPU_8
