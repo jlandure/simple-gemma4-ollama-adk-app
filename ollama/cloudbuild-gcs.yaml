@@ -1,0 +1,30 @@
+# Télécharge un modèle Gemma 4 avec Ollama puis le synchronise dans un bucket
+# Cloud Storage (blobs + manifests), monté ensuite en volume par Cloud Run.
+# Recommandé par Google pour les modèles > 10 Go (ex. gemma4:26b, gemma4:31b).
+steps:
+  - id: pull
+    name: ollama/ollama:0.40.18
+    entrypoint: bash
+    env: ['OLLAMA_MODELS=/workspace/models']
+    args:
+      - -c
+      - |
+        ollama serve >/dev/null 2>&1 &
+        until ollama list >/dev/null 2>&1; do sleep 1; done
+        ollama pull "${_MODEL}"
+        ollama list
+        # Ollama 0.40 fait un MkdirAll sur manifests-v2 au chargement du modèle, ce
+        # qui échoue sur le volume en lecture seule : on livre le dossier dans le
+        # bucket (rsync ne copie pas les dossiers vides, d'où le .keep).
+        mkdir -p /workspace/models/manifests-v2
+        touch /workspace/models/manifests-v2/.keep
+  - id: sync
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    args: ['gcloud', 'storage', 'rsync', '--recursive', '/workspace/models', 'gs://${_BUCKET}']
+substitutions:
+  _MODEL: gemma4:26b
+  _BUCKET: jlandure-demos-ollama-models
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 200
+timeout: 3600s

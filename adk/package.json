@@ -15,6 +15,7 @@
   "type": "module",
   "dependencies": {
     "@google/adk": "^2.5.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "google-auth-library": "^11.3.4",
     "zod": "^4.6.7"
   },

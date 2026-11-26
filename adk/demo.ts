@@ -2,14 +2,18 @@
  * Démo scriptée (équivalent du index.js LangChain de la version Gemma 3) :
  *   1. traduction FR -> EN
  *   2. description d'une capture d'écran (multimodal)
- *   3. function calling : heure + météo via les outils ADK
+ *   3. function calling : heure + météo à Las Vegas via les outils ADK
+ *   4. MCP : dernière version d'ADK via le serveur MCP distant Context7
  *
- * Usage : npm run demo
- *         OLLAMA_HOST=http://localhost:11435 npm run demo   # via le proxy Cloud Run
+ * Usage : npm run demo                                       # image par défaut
+ *         npm run demo -- images/tour-eiffel.jpg             # une autre image
+ *         OLLAMA_HOST=http://localhost:11435 npm run demo    # via le proxy Cloud Run
  */
 import {InMemoryRunner, isFinalResponse, type Event} from '@google/adk';
 import type {Content} from '@google/genai';
 import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {MODEL, rootAgent} from './agents/gemma4_assistant/agent.js';
 
 const runner = new InMemoryRunner({agent: rootAgent, appName: 'gemma4_demo'});
@@ -31,6 +35,11 @@ async function ask(title: string, message: Content): Promise<string> {
   console.log(answer);
   console.log(`(${((performance.now() - start) / 1000).toFixed(1)} s)`);
   return answer;
+}
+
+function mimeType(file: string): string {
+  const ext = path.extname(file).toLowerCase().slice(1);
+  return ext === 'jpg' ? 'image/jpeg' : `image/${ext || 'png'}`;
 }
 
 function logToolActivity(event: Event) {
@@ -57,18 +66,32 @@ await ask('Traduction', {
   ],
 });
 
-const image = await fs.readFile(new URL('./holzmarkt-infos.png', import.meta.url));
-await ask('Description d’image', {
+const imagePath = path.resolve(
+  process.argv[2] ?? process.env.DEMO_IMAGE ?? fileURLToPath(new URL('./images/holzmarkt-infos.png', import.meta.url)),
+);
+const image = await fs.readFile(imagePath);
+await ask(`Description d’image (${path.basename(imagePath)})`, {
   role: 'user',
   parts: [
-    {text: 'What do you see in this webpage? Describe it in English. Be detailed and precise.'},
-    {inlineData: {mimeType: 'image/png', data: image.toString('base64')}},
+    {text: 'What do you see in this image? Describe it in English. Be detailed and precise.'},
+    {inlineData: {mimeType: mimeType(imagePath), data: image.toString('base64')}},
   ],
 });
 
 await ask('Function calling', {
   role: 'user',
-  parts: [{text: 'Quelle heure est-il à Tokyo et quel temps fait-il à Nantes en ce moment ?'}],
+  parts: [{text: 'Quelle heure est-il à Las Vegas et quel temps y fait-il en ce moment ?'}],
+});
+
+await ask('MCP Context7', {
+  role: 'user',
+  parts: [
+    {
+      text:
+        'Avec Context7, quelle est la dernière version de Google ADK (Agent Development Kit) ? ' +
+        'Donne la librairie Context7 utilisée et le numéro de version.',
+    },
+  ],
 });
 
 await runner.close();

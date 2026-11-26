@@ -28,12 +28,13 @@ gcloud run services add-iam-policy-binding "$OLLAMA_SERVICE" \
 AUTH_FLAG=--no-allow-unauthenticated
 [[ "${PUBLIC:-false}" == "true" ]] && AUTH_FLAG=--allow-unauthenticated
 
+# adk-devtools 2.5 transmet à gcloud tout argument qui n'est pas une option ADK :
+# toujours écrire --option=valeur, et pas de séparateur "--".
 npx adk deploy cloud_run agents/gemma4_assistant \
-  --project "$PROJECT" --region "$REGION" \
-  --service_name "$SERVICE" \
+  --project="$PROJECT" --region="$REGION" \
+  --service_name="$SERVICE" \
   --with_ui \
-  -- \
-  --service-account "$SA" \
-  --set-env-vars "OLLAMA_HOST=${OLLAMA_URL},OLLAMA_MODEL=${MODEL}" \
-  --memory 1Gi --timeout 600 --max-instances 2 \
+  --service-account="$SA" \
+  --set-env-vars="OLLAMA_HOST=${OLLAMA_URL},OLLAMA_MODEL=${MODEL}" \
+  --memory=1Gi --timeout=600 --max-instances=2 \
   "$AUTH_FLAG"
