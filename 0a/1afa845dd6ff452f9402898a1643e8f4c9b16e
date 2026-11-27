@@ -1,0 +1,33 @@
+AGENTS.md
+  s_a5c527c7ef6123::t_71eeb870207345 79-119,127
+README.md
+  s_88bb103f2151af::t_d0ad4f41f519b9 75
+adk/agents/gemma4_assistant/agent.ts
+  s_88bb103f2151af::t_37383bb29a6be5 50-56
+adk/demo.ts
+  s_88bb103f2151af::t_7053f232e50f1c 6,91-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "0a1afa845dd6ff452f9402898a1643e8f4c9b16e",
+  "prompts": {},
+  "sessions": {
+    "s_88bb103f2151af": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "378b48b6-2f1c-49e8-a219-e168436cf2f9",
+        "model": "unknown"
+      },
+      "human_author": "Julien Landuré <julien.landure@gmail.com>"
+    },
+    "s_a5c527c7ef6123": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "41d96257-31f0-451f-b476-4d2a4f04996e",
+        "model": "grok-4.7"
+      },
+      "human_author": "Julien Landuré <julien.landure@gmail.com>"
+    }
+  }
+}
