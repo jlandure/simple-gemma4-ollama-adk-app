@@ -72,7 +72,7 @@ Puis ouvrir http://localhost:8080/dev-ui/.
 1. **Traduction** FR -> EN.
 2. **Multimodal** : description d'une photo de la tour Eiffel (`npm run demo -- chemin/image.jpg` pour une autre).
 3. **Function calling** : heure et météo à Las Vegas, deux outils appelés en parallèle.
-4. **MCP** : Gemma 4 interroge le serveur MCP distant Context7 pour trouver la dernière version de Google ADK.
+4. **MCP** : Gemma 4 interroge le serveur MCP distant Context7 (librairie `/google/adk-js`) pour expliquer comment installer ADK pour TypeScript et lancer son interface web.
 
 ## Démo bonus : Claude Code sur Gemma 4
 

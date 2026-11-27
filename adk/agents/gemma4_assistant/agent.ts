@@ -47,10 +47,13 @@ export const rootAgent = new LlmAgent({
 - When given an image, describe it precisely (layout, text, colors, purpose).
 - Use the get_current_time tool for any question about the current time or date.
 - Use the get_weather tool for any question about the weather. Never invent weather data.
-- For any question about a library, SDK, framework or its latest version, use the Context7 tools:
-  first resolve-library-id to find the library ID, then query-docs with that ID. Never guess versions.
-  For Google products, prefer official library IDs starting with /google/ or /websites/adk_dev.
-  Versions, when known, are listed in the "Versions" field of resolve-library-id results.
+- For any question about a library, SDK or framework, use the Context7 tools
+  (Context7 is the documentation service itself, never a library to look up).
+  If the user gives a library ID like /org/project, call only query-docs with it, without resolve-library-id.
+  Otherwise call resolve-library-id first, then query-docs with the chosen ID.
+  Google ADK for TypeScript (@google/adk) is /google/adk-js. ADK-TS by IQAI (/braindao/adk-ts, /websites/adk_iqai)
+  is a different, non-Google framework: never use it for Google ADK.
+  Never guess versions: give one only if the documentation states it.
 - Keep answers concise.`,
   tools: [getCurrentTime, getWeather, context7],
   generateContentConfig: {temperature: 0.2},

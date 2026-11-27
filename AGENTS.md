@@ -76,6 +76,47 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 - **GPU** : 1 L4, 8 vCPU, 32 Gio, `--no-gpu-zonal-redundancy`, `--max-instances 1`, `OLLAMA_NUM_PARALLEL=4`, `OLLAMA_KEEP_ALIVE=-1`, `OLLAMA_CONTEXT_LENGTH=65536` (variable `CONTEXT_LENGTH` de `ollama/deploy.sh`, nécessaire pour Claude Code).
 - **Coûts** : `deploy.sh` ne fixe pas `--min-instances` (0 par défaut). Passer à 1 avant une démo avec `gcloud run services update <service> --min-instances 1`, puis revenir à 0 : une L4 chaude est facturée en continu.
 
+## Coûts et nettoyage après une démo
+
+Ordre de grandeur (tarif public `europe-west1`, sans redondance zonale) : une instance Ollama (L4 + 8 vCPU + 32 Gio) coûte **~1,42 $/h**, facturée tant qu'elle tourne. Exemple réel : `ollama-gemma4` et `ollama-gemma4-26b` laissés à `min-instances 1` du 26/11/2026 ~9h40 au 27/11 ~19h = ~50 h d'instance, **~71 $**. Vérifier les deux services Ollama, pas seulement celui de la démo.
+
+1. **Remettre tout à zéro** (chaque commande crée une révision et démarre une instance, qui s'éteint après ~15 min sans requête) :
+
+   ```bash
+   for s in ollama-gemma4 ollama-gemma4-26b gemma4-adk-agent; do gcloud run services update $s --project jlandure-demos --region europe-west1 --min-instances 0; done
+   ```
+
+2. **Vérifier** : `minScale` vide = 0.
+
+   ```bash
+   for s in ollama-gemma4 ollama-gemma4-26b gemma4-adk-agent; do gcloud run services describe $s --project jlandure-demos --region europe-west1 --format="value(metadata.name,spec.template.metadata.annotations.'autoscaling.knative.dev/minScale')"; done
+   ```
+
+   Temps d'instance facturable des dernières 48 h, par service (métrique Cloud Monitoring `run.googleapis.com/container/billable_instance_time`, via l'API REST) :
+
+   ```bash
+   curl -s -G "https://monitoring.googleapis.com/v3/projects/jlandure-demos/timeSeries" -H "Authorization: Bearer $(gcloud auth print-access-token)" --data-urlencode 'filter=metric.type="run.googleapis.com/container/billable_instance_time" AND resource.type="cloud_run_revision"' --data-urlencode "interval.startTime=$(date -u -v-2d +%Y-%m-%dT%H:%M:%SZ)" --data-urlencode "interval.endTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" --data-urlencode "aggregation.alignmentPeriod=172800s" --data-urlencode "aggregation.perSeriesAligner=ALIGN_SUM" --data-urlencode "aggregation.crossSeriesReducer=REDUCE_SUM" --data-urlencode "aggregation.groupByFields=resource.label.service_name"
+   ```
+
+   Valeurs en secondes. La facture réelle arrive dans la console (Facturation > Rapports) avec jusqu'à 24 h de retard.
+
+3. **Nettoyer Artifact Registry.** Chaque build de `ollama/` pousse une image de ~9,3 Go (`ollama-gemma4`) et l'ancienne perd son tag mais reste stockée (~0,10 $/Go/mois). Le dépôt `europe-west1-docker.pkg.dev/jlandure-demos/cloud-run-source-deploy` est **partagé avec d'autres projets** (merch4you, mcp-registry…) : ne supprimer que les paquets `ollama-gemma4` et `gemma4-adk-agent`, et **garder l'image de la révision en service**, sinon Cloud Run ne peut plus démarrer d'instance (une révision référence son image par empreinte). Supprimer une image empêche aussi tout retour arrière vers les révisions qui l'utilisaient.
+
+   ```bash
+   REPO=europe-west1-docker.pkg.dev/jlandure-demos/cloud-run-source-deploy
+   for pkg in ollama-gemma4 gemma4-adk-agent; do
+     keep=$(gcloud run revisions describe "$(gcloud run services describe "$pkg" --project jlandure-demos --region europe-west1 --format='value(status.latestReadyRevisionName)')" --project jlandure-demos --region europe-west1 --format='value(status.imageDigest)')
+     for d in $(gcloud artifacts docker images list "$REPO/$pkg" --format='value(version)'); do
+       [[ "$keep" == *"$d" ]] && echo "garde $pkg@$d" && continue
+       gcloud artifacts docker images delete "$REPO/$pkg@$d" --delete-tags --quiet
+     done
+   done
+   ```
+
+   Ce script suppose que tout le trafic va à la dernière révision prête (`gcloud run services describe <service> --format='value(status.traffic)'` pour le vérifier). `ollama-gemma4-26b` utilise l'image Ollama publique tant qu'il n'a pas été redéployé avec le `deploy.sh` actuel ; ensuite son image légère s'appelle `ollama-gemma4:runtime-<version>` et se nettoie de la même façon. Le 27/11/2026, ce nettoyage a supprimé 5 images `ollama-gemma4` et 2 images `gemma4-adk-agent` (~47 Go).
+
+4. **Le bucket** `gs://jlandure-demos-ollama-models` garde le modèle 26b (~18 Go, ~0,40 $/mois) : le conserver tant que le service `ollama-gemma4-26b` existe, il en a besoin pour démarrer.
+
 ## Conventions et pièges connus
 
 - ADK JS n'a pas d'intégration Ollama : `OllamaLlm` étend `BaseLlm` et est enregistré via `LLMRegistry.register` (le nom `ollama/<modèle>` fonctionne aussi). Les schémas Gemini (`type: 'OBJECT'`) sont convertis en JSON Schema minuscule pour Ollama.
@@ -83,6 +124,7 @@ Depuis `ollama/` : `./deploy.sh` (voir variables plus bas).
 - `@modelcontextprotocol/sdk` est une dépendance pair optionnelle d'ADK : elle doit rester dans `dependencies`.
 - ADK ferme la session MCP après chaque appel, ce qui logue une fausse erreur « MCP transport error … aborted » : `agent.ts` la rétrograde en `debug`.
 - Context7 n'indexe pas de numéro de version pour ADK JS (seulement Python et Go) : ne pas promettre la version npm exacte dans la démo.
+- Dans Context7, ADK JS officiel = `/google/adk-js`. `resolve-library-id` ne le propose pas et met en avant ADK-TS d'IQAI (`/braindao/adk-ts`, `/websites/adk_iqai`), un autre framework, mieux noté : la démo donne l'ID directement pour que Gemma appelle `query-docs` sans passer par la recherche. Ne pas écrire « Avec Context7 (librairie …) » dans la question : Gemma lance alors `resolve-library-id("Context7")` en plus (+10 s). La formulation « Cherche dans la documentation de la librairie /google/adk-js : … » donne un seul appel `query-docs` (3 essais sur 3, 15 à 22 s sur M1 Pro).
 - `adk deploy cloud_run` (adk-devtools 2.5.0) transmet à `gcloud` tout argument qui n'est pas une option ADK, y compris les valeurs séparées par un espace et le séparateur `--` : écrire **toutes** les options en `--option=valeur`, sans `--`, et le chemin de l'agent en premier.
 - Le serveur ADK refuse toute origine non déclarée (`403 Forbidden: origin not allowed`, affiché « Failed to create session » dans l'UI) : `adk/deploy.sh` passe `--allow_origins` avec `http://localhost:8080` (proxy) et l'URL Cloud Run du service. Variable `ALLOW_ORIGINS` pour en ajouter.
 - Ollama 0.40 fait un `MkdirAll` sur `$OLLAMA_MODELS/manifests-v2` au chargement d'un modèle : le bucket doit contenir `manifests-v2/.keep` (créé par `cloudbuild-gcs.yaml`) et le volume est monté avec `implicit-dirs`.

@@ -3,7 +3,7 @@
  *   1. traduction FR -> EN
  *   2. description d'une capture d'écran (multimodal)
  *   3. function calling : heure + météo à Las Vegas via les outils ADK
- *   4. MCP : dernière version d'ADK via le serveur MCP distant Context7
+ *   4. MCP : installer ADK pour TypeScript, d'après la doc /google/adk-js du serveur MCP distant Context7
  *
  * Usage : npm run demo                                       # image par défaut
  *         npm run demo -- images/tour-eiffel.jpg             # une autre image
@@ -88,8 +88,8 @@ await ask('MCP Context7', {
   parts: [
     {
       text:
-        'Avec Context7, quelle est la dernière version de Google ADK (Agent Development Kit) ? ' +
-        'Donne la librairie Context7 utilisée et le numéro de version.',
+        'Cherche dans la documentation de la librairie /google/adk-js : comment installer ADK pour TypeScript ' +
+        "et lancer l'interface web de développement ? Cite la source.",
     },
   ],
 });
