@@ -68,7 +68,7 @@ Ollama ouvre son port avant d'avoir chargé le modèle. Cloud Run croirait alors
 
 1. Ollama écoute en interne sur le port 11434, que Cloud Run n'expose pas (sur `0.0.0.0` : lié à `127.0.0.1`, Ollama refuserait en 403 les requêtes relayées, dont l'en-tête `Host` est `xxx.run.app`) ;
 2. le modèle `$MODEL` est chargé en mémoire (`ollama run $MODEL ""`, méthode de la FAQ Ollama) ;
-3. une génération de chauffe (prompt de plus de 512 tokens + [warmup.jpg](warmup.jpg)) paie le coût du premier calcul GPU : sans elle, la première requête prenait ~74 s et la première image ~40 s sur L4, même modèle chargé ;
+3. une génération de chauffe (prompt de plus de 512 tokens + [warmup.jpg](warmup.jpg)) paie le coût du premier calcul GPU : sans elle, la première requête prenait ~74 s et la première image ~40 s sur L4, même modèle chargé. Avec elle : ~2 s pour la première traduction, mais encore ~20 s pour la première image de la démo ADK (image placée après ~1 700 tokens de contexte, cas que la chauffe ne couvre pas) : faire un `npm run demo` avant de monter sur scène ;
 4. socat ouvre ensuite le port 8080 et relaie vers Ollama.
 
 `deploy.sh` laisse jusqu'à 15 minutes à la sonde de démarrage TCP (90 × 10 s), au lieu des 240 s par défaut. Conséquences :
